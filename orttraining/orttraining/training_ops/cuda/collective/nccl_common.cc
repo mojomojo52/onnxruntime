@@ -9,6 +9,16 @@
 namespace onnxruntime {
 namespace cuda {
 
+#define NCCLCHECK(cmd) do {                         \
+  ncclResult_t r = cmd;                             \
+  if (r!= ncclSuccess) {                            \
+    printf("Failed, NCCL error %s:%d '%s'\n",             \
+        __FILE__,__LINE__,ncclGetErrorString(r));   \
+    exit(EXIT_FAILURE);                             \
+  }                                                 \
+} while(0)
+
+
 ncclDataType_t GetNcclDataType(onnxruntime::MLDataType type) {
   if (type == DataTypeImpl::GetType<uint8_t>()) {
     return ncclUint8;
@@ -38,17 +48,23 @@ static Status CreateNcclCommunicator(MPI_Group* mpi_world_group,
                           << worker_group.ToString();
     return Status::OK();
   }
-
+  std::cout<<"* CreateNcclCommunicator: before MPI_Group_incl"<<std::endl;
+  for(auto rank : worker_group.ranks){
+    std::cout<<rank<<" ";
+  }
+  std::cout<<std::endl;
   // Create new group
   MPI_Group mpi_group;
   MPI_CHECK(MPI_Group_incl(*mpi_world_group, worker_group.ranks.size(), worker_group.ranks.data(), &mpi_group));
 
+  std::cout<<"* CreateNcclCommunicator: before MPI_Comm_create_group"<<std::endl;
   // Create new MPI communicator
   MPI_Comm mpi_comm;
   static int32_t mpi_group_id = 0;
   MPI_CHECK(MPI_Comm_create_group(MPI_COMM_WORLD, mpi_group, ++mpi_group_id, &(mpi_comm)));
   ORT_ENFORCE(mpi_comm != MPI_COMM_NULL, "MPI communicator creation failed.");
 
+  std::cout<<"* CreateNcclCommunicator: before MPI_Bcast"<<std::endl;
   // Create new NCCL communicator
   ncclUniqueId nccl_id;
   if (worker_group.rank_in_group == 0) {

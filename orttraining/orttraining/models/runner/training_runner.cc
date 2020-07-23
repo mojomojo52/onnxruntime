@@ -21,6 +21,7 @@
 #include "orttraining/models/runner/training_util.h"
 #include "single_include/nlohmann/json.hpp"
 #include "test/perftest/utils.h"
+#include "orttraining/core/framework/distributed_run_context.h"
 
 using json = nlohmann::json;
 
@@ -112,7 +113,12 @@ Status TrainingRunner::Initialize() {
   }
 
   // always configure the loss function
-  if (params_.pipeline_parallel_size == 1 || params_.mpi_context.world_rank == params_.mpi_context.world_size - 1) {
+  auto pipeline_stage_id = GetPipelineStageId(params_.mpi_context.world_rank,
+                           params_.horizontal_parallel_size,
+                           params_.data_parallel_size);
+  if (params_.pipeline_parallel_size == 1 ||
+   (pipeline_stage_id +1) == params_.pipeline_parallel_size) {
+
     TrainingSession::TrainingConfiguration::LossFunctionConfiguration lf{};
     lf.loss_function_info = params_.loss_func_info;
 
@@ -714,6 +720,7 @@ void TrainingRunner::RunWithUpdate(VectorString& feed_names,
 
   // Assume that only the last pipeline stage can see loss, predicted value, and so on.
   // Thus, the error function should only be called when we are at the last stage.
+  std::cout<<" ** training_runner "<<pipeline_context_.pipeline_stage_id<<" "<<params_.pipeline_parallel_size<<std::endl;
   const bool session_can_see_loss = params_.pipeline_parallel_size == 1 ||
                                     pipeline_context_.pipeline_stage_id == params_.pipeline_parallel_size - 1;
   if (session_can_see_loss &&
