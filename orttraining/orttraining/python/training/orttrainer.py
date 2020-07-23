@@ -240,9 +240,9 @@ class ORTTrainer(object):
         return onnx_model
 
     def _init_session(self):
-        if self._onnx_model is None: 
+        if self._onnx_model is None:
             return
-        
+
         if self._enable_internal_postprocess:
             self._onnx_model_ = postprocess.run_postprocess(self.onnx_model_)
 
@@ -258,9 +258,9 @@ class ORTTrainer(object):
         if self._torch_model is not None:
             self.torch_model_.cpu()
             self.onnx_model = self.convert_model_loss_fn_to_onnx(self._torch_model, self.loss_fn, self.model_desc, torch.device('cpu'), inputs, opset_version=self.opset_version, _enable_internal_postprocess=self._enable_internal_postprocess)
-        
+
         self._init_session
-        
+
 
     def train_step(self, *input, **kwargs):
         r"""Train step method
@@ -277,7 +277,7 @@ class ORTTrainer(object):
             ordered :py:obj:`list` with model outputs as described by :py:attr:`ORTTrainer.model_desc`
         """
         if self._onnx_model is None:
-            self._init_onnx_model_(*input) 
+            self._init_onnx_model_(*input)
 
     def _create_ort_training_session(self):
         # Validating frozen_weights names
