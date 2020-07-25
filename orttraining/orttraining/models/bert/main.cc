@@ -527,6 +527,7 @@ void setup_training_params(BertParameters& params) {
 
   if (params.pipeline_parallel_size > 1) {
     auto pipeline_model_name_base = model_name_base + ToPathString(std::to_string(params.mpi_context.world_rank));
+    params.pipeline_partitioned_model_path = pipeline_model_name_base + ORT_TSTR("_partitioned.onnx");
     params.model_with_loss_func_path = pipeline_model_name_base + ORT_TSTR("_with_cost.onnx");
     params.model_with_training_graph_path = pipeline_model_name_base + ORT_TSTR("_bw.onnx");
     params.model_actual_running_graph_path = pipeline_model_name_base + ORT_TSTR("_bw_running.onnx");

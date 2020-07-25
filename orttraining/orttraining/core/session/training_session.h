@@ -173,6 +173,11 @@ class TrainingSession : public InferenceSession {
       // cut_list contains the list of CutInfo to make the graph partitions.
       // cut_list[i] contains the CutInfo to make the partition between stage i and stage i+1
       std::vector<CutInfo> cut_list;
+
+      // The base path at which to save the intermediate partitioned input model (forward pass only).
+      // Based on the stage the rank belongs to, ORT will append the corresponding suffix to the PathString
+      // to avoid name conflict.
+      optional<PathString> partitioned_model_path{};
     };
 
     // If pipeline is enabled, this field's has_value() returns true.

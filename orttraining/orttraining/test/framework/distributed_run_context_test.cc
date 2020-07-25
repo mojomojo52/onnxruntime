@@ -55,6 +55,13 @@ TEST(DistributedRunContextTest, SingleGPUTest) {
   ASSERT_EQ(hori_group.rank_in_group, 0);
   ASSERT_EQ(hori_group.ranks.size(), 1);
   ASSERT_EQ(hori_group.ranks[0], 0);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 0);
 }
 
 TEST(DistributedRunContextTest, SingleNodeTest) {
@@ -82,6 +89,13 @@ TEST(DistributedRunContextTest, SingleNodeTest) {
   ASSERT_EQ(hori_group.rank_in_group, 0);
   ASSERT_EQ(hori_group.ranks.size(), 1);
   ASSERT_EQ(hori_group.ranks[0], 1);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 1);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 1);
 }
 
 TEST(DistributedRunContextTest, SingleNodeTest2) {
@@ -110,6 +124,13 @@ TEST(DistributedRunContextTest, SingleNodeTest2) {
   for (auto i = 0; i < 1; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 1);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 1);
 }
 
 TEST(DistributedRunContextTest, SingleNodeTest3) {
@@ -136,6 +157,83 @@ TEST(DistributedRunContextTest, SingleNodeTest3) {
   ASSERT_EQ(hori_group.ranks.size(), 4);
   for (auto i = 0; i < 1; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 1);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 1);
+}
+
+TEST(DistributedRunContextTest, SingleNodeTest4) {
+  DistributedRunConfig config = {1, 4, 1, 4, 2, 1, 2};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 0);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 1);
+  ASSERT_EQ(data_group.ranks.size(), 2);
+  for (auto i = 0; i < 2; i++) {
+    ASSERT_EQ(data_group.ranks[i], i);
+  }
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 1);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 1);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 1);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 2);
+  ASSERT_EQ(model_group.ranks[0], 1);
+  ASSERT_EQ(model_group.ranks[1], 3);
+}
+
+TEST(DistributedRunContextTest, SingleNodeTest5) {
+  DistributedRunConfig config = {1, 4, 1, 4, 1, 1, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().pipeline_stage_size, config.pipeline_stage_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 1);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 1);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 1);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 1);
+
+  auto pipeline_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(pipeline_group.group_id, 0);
+  ASSERT_EQ(pipeline_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(pipeline_group.rank_in_group, 1);
+  ASSERT_EQ(pipeline_group.ranks.size(), 4);
+  for (auto i = 0; i < 1; i++) {
+    ASSERT_EQ(pipeline_group.ranks[i], i);
   }
 }
 
@@ -164,6 +262,13 @@ TEST(DistributedRunContextTest, FullDataParallelTest) {
   ASSERT_EQ(hori_group.rank_in_group, 0);
   ASSERT_EQ(hori_group.ranks.size(), 1);
   ASSERT_EQ(hori_group.ranks[0], 0);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 0);
 }
 
 TEST(DistributedRunContextTest, FullDataParallelTest2) {
@@ -191,6 +296,13 @@ TEST(DistributedRunContextTest, FullDataParallelTest2) {
   ASSERT_EQ(hori_group.rank_in_group, 0);
   ASSERT_EQ(hori_group.ranks.size(), 1);
   ASSERT_EQ(hori_group.ranks[0], 2);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 2);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 2);
 }
 
 TEST(DistributedRunContextTest, FullDataParallelTest3) {
@@ -218,6 +330,13 @@ TEST(DistributedRunContextTest, FullDataParallelTest3) {
   ASSERT_EQ(hori_group.rank_in_group, 0);
   ASSERT_EQ(hori_group.ranks.size(), 1);
   ASSERT_EQ(hori_group.ranks[0], 58);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 58);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 58);
 }
 
 TEST(DistributedRunContextTest, FullHoriParallelTest) {
@@ -245,6 +364,13 @@ TEST(DistributedRunContextTest, FullHoriParallelTest) {
   for (auto i = 0; i < 16; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 0);
 }
 
 TEST(DistributedRunContextTest, FullHoriParallelTest2) {
@@ -272,6 +398,13 @@ TEST(DistributedRunContextTest, FullHoriParallelTest2) {
   for (auto i = 0; i < 16; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 2);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 2);
 }
 
 TEST(DistributedRunContextTest, FullHoriParallelTest3) {
@@ -299,9 +432,118 @@ TEST(DistributedRunContextTest, FullHoriParallelTest3) {
   for (auto i = 0; i < 16; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 10);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 10);
 }
 
-TEST(DistributedRunContextTest, MixedParallelTest) {
+TEST(DistributedRunContextTest, FullPipelineParallelTest) {
+  DistributedRunConfig config = {0, 16, 0, 4, 1, 1, 16};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 0);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 0);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 0);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 0);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(model_group.ranks[i], i);
+  }
+}
+
+TEST(DistributedRunContextTest, FullPipelineParallelTest2) {
+  DistributedRunConfig config = {2, 16, 2, 4, 1, 1, 16};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 2);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 2);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 2);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 2);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 2);
+  ASSERT_EQ(model_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(model_group.ranks[i], i);
+  }
+}
+
+TEST(DistributedRunContextTest, FullPipelineParallelTest3) {
+  DistributedRunConfig config = {10, 16, 2, 4, 1, 1, 16};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 10);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 10);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 10);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 10);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 10);
+  ASSERT_EQ(model_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(model_group.ranks[i], i);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest_DxH) {
   DistributedRunConfig config = {0, 64, 0, 4, 16, 4};
   DistributedRunTestContext ctx(config);
   ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
@@ -329,9 +571,16 @@ TEST(DistributedRunContextTest, MixedParallelTest) {
   for (auto i = 0; i < 4; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 0);
 }
 
-TEST(DistributedRunContextTest, MixedParallelTest2) {
+TEST(DistributedRunContextTest, MixedParallelTest2_DxH) {
   DistributedRunConfig config = {2, 64, 2, 4, 16, 4};
   DistributedRunTestContext ctx(config);
   ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
@@ -359,9 +608,16 @@ TEST(DistributedRunContextTest, MixedParallelTest2) {
   for (auto i = 0; i < 4; i++) {
     ASSERT_EQ(hori_group.ranks[i], i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 2);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 2);
 }
 
-TEST(DistributedRunContextTest, MixedParallelTest3) {
+TEST(DistributedRunContextTest, MixedParallelTest3_DxH) {
   DistributedRunConfig config = {58, 64, 2, 4, 16, 4};
   DistributedRunTestContext ctx(config);
   ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
@@ -389,9 +645,16 @@ TEST(DistributedRunContextTest, MixedParallelTest3) {
   for (auto i = 0; i < 4; i++) {
     ASSERT_EQ(hori_group.ranks[i], 14 * 4 + i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 58);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 58);
 }
 
-TEST(DistributedRunContextTest, MixedParallelTest4) {
+TEST(DistributedRunContextTest, MixedParallelTest4_DxH) {
   DistributedRunConfig config = {63, 64, 3, 4, 16, 4};
   DistributedRunTestContext ctx(config);
   ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
@@ -419,10 +682,456 @@ TEST(DistributedRunContextTest, MixedParallelTest4) {
   for (auto i = 0; i < 4; i++) {
     ASSERT_EQ(hori_group.ranks[i], 15 * 4 + i);
   }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 63);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 1);
+  ASSERT_EQ(model_group.ranks[0], 63);
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest_DxP) {
+  DistributedRunConfig config = {0, 64, 0, 4, 16, 1, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 0);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 16);
+  // std::vector<int32_t> expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(data_group.ranks[i], i);
+  }
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 0);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 0);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest2_DxP) {
+  DistributedRunConfig config = {2, 64, 2, 4, 16, 1, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 0);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 2);
+  ASSERT_EQ(data_group.ranks.size(), 16);
+  // std::vector<int32_t> expected = {2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62};
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(data_group.ranks[i], i);
+  }
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 2);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 2);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 2);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 2 + i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest3_DxP) {
+  DistributedRunConfig config = {58, 64, 2, 4, 16, 1, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 3);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 10);
+  ASSERT_EQ(data_group.ranks.size(), 16);
+  // std::vector<int32_t> expected = {2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62};
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(data_group.ranks[i], i + 48);
+  }
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 58);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 58);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 10);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 3);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 10 + i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest4_DxP) {
+  DistributedRunConfig config = {63, 64, 3, 4, 16, 1, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 3);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 15);
+  ASSERT_EQ(data_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(data_group.ranks[i], i + 48);
+  }
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 63);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 1);
+  ASSERT_EQ(hori_group.ranks[0], 63);
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 15);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 3);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 15 + i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest_HxP) {
+  DistributedRunConfig config = {0, 64, 0, 4, 1, 16, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 0);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 0);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 0);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest2_HxP) {
+  DistributedRunConfig config = {2, 64, 2, 4, 1, 16, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 2);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 2);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 0);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 2);
+  ASSERT_EQ(hori_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 2);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 2 + i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest3_HxP) {
+  DistributedRunConfig config = {58, 64, 2, 4, 1, 16, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 58);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 58);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 3);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 10);
+  ASSERT_EQ(hori_group.ranks.size(), 16);
+  // std::vector<int32_t> expected = {2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62};
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i + 48);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 10);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 3);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 10 + i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest4_HxP) {
+  DistributedRunConfig config = {63, 64, 3, 4, 1, 16, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 63);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 1);
+  ASSERT_EQ(data_group.ranks[0], 63);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 3);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 15);
+  ASSERT_EQ(hori_group.ranks.size(), 16);
+  for (auto i = 0; i < 16; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i + 48);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 15);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 3);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 15 + i * 16);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest_DxHxP) {
+  DistributedRunConfig config = {0, 24, 0, 4, 2, 3, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 0);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 2);
+  ASSERT_EQ(data_group.ranks[0], 0);
+  ASSERT_EQ(data_group.ranks[1], 3);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 0);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 0);
+  ASSERT_EQ(hori_group.ranks.size(), 3);
+  for (auto i = 0; i < 3; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 0);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], i * 6);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest2_DxHxP) {
+  DistributedRunConfig config = {2, 24, 2, 4, 2, 3, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 2);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 0);
+  ASSERT_EQ(data_group.ranks.size(), 2);
+  ASSERT_EQ(data_group.ranks[0], 2);
+  ASSERT_EQ(data_group.ranks[1], 5);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 0);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 2);
+  ASSERT_EQ(hori_group.ranks.size(), 3);
+  for (auto i = 0; i < 3; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 2);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 0);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 2 + i * 6);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest3_DxHxP) {
+  DistributedRunConfig config = {17, 24, 2, 4, 2, 3, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 8);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 1);
+  ASSERT_EQ(data_group.ranks.size(), 2);
+  ASSERT_EQ(data_group.ranks[0], 14);
+  ASSERT_EQ(data_group.ranks[1], 17);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 5);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 2);
+  ASSERT_EQ(hori_group.ranks.size(), 3);
+  for (auto i = 0; i < 3; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i + 15);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 5);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 2);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 5 + i * 6);
+  }
+}
+
+TEST(DistributedRunContextTest, MixedParallelTest4_DxHxP) {
+  DistributedRunConfig config = {23, 24, 3, 4, 2, 3, 4};
+  DistributedRunTestContext ctx(config);
+  ASSERT_EQ(ctx.GetRunConfig().world_rank, config.world_rank);
+  ASSERT_EQ(ctx.GetRunConfig().world_size, config.world_size);
+  ASSERT_EQ(ctx.GetRunConfig().local_rank, config.local_rank);
+  ASSERT_EQ(ctx.GetRunConfig().local_size, config.local_size);
+  ASSERT_EQ(ctx.GetRunConfig().data_parallel_size, config.data_parallel_size);
+  ASSERT_EQ(ctx.GetRunConfig().horizontal_parallel_size, config.horizontal_parallel_size);
+
+  auto data_group = ctx.GetWorkerGroup(WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.group_id, 11);
+  ASSERT_EQ(data_group.group_type, WorkerGroupType::DataParallel);
+  ASSERT_EQ(data_group.rank_in_group, 1);
+  ASSERT_EQ(data_group.ranks.size(), 2);
+  ASSERT_EQ(data_group.ranks[0], 20);
+  ASSERT_EQ(data_group.ranks[1], 23);
+
+  auto hori_group = ctx.GetWorkerGroup(WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.group_id, 7);
+  ASSERT_EQ(hori_group.group_type, WorkerGroupType::HorizontalParallel);
+  ASSERT_EQ(hori_group.rank_in_group, 2);
+  ASSERT_EQ(hori_group.ranks.size(), 3);
+  for (auto i = 0; i < 3; i++) {
+    ASSERT_EQ(hori_group.ranks[i], i + 21);
+  }
+
+  auto model_group = ctx.GetWorkerGroup(WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.group_id, 5);
+  ASSERT_EQ(model_group.group_type, WorkerGroupType::ModelParallel);
+  ASSERT_EQ(model_group.rank_in_group, 3);
+  ASSERT_EQ(model_group.ranks.size(), 4);
+  for (auto i = 0; i < 4; i++) {
+    ASSERT_EQ(model_group.ranks[i], 5 + i * 6);
+  }
 }
 
 TEST(DistributedRunContextTest, MixedParallelTest_pipeline) {
-
   // int32_t world_rank{0};  // Get global world rank
   // int32_t world_size{1};  // Get global world size
   // int32_t local_rank{0};  // Get local rank on one physical node.

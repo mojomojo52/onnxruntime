@@ -4,11 +4,8 @@
 #include "orttraining/core/graph/pipeline_transformer.h"
 #include <queue>
 
-<<<<<<< f0edd074fb6a957b7c40a5135af61654043ed1c2
 #include "core/graph/graph_utils.h"
-=======
 #include "orttraining/core/framework/distributed_run_context.h"
->>>>>>> staging dhp
 
 using namespace onnxruntime::common;
 using namespace onnxruntime::graph_utils;
@@ -921,7 +918,7 @@ common::Status AddPassthroughInitializer(Graph& graph,
     recv_nodes[i]->MutableOutputDefs().push_back(current_node_arg);
 
     // update the consumer node's input if the node's group is not in the first partition
-    if (i > from_stage && node_groups[node_group_index].stage_id == (i + 1)) {
+    if (node_groups[node_group_index].stage_id == (i + 1)) {
       for (auto node : node_groups[node_group_index].nodes) {
         for (auto& input_node : node->MutableInputDefs()) {
           if (input_node == initializer) {
@@ -934,7 +931,7 @@ common::Status AddPassthroughInitializer(Graph& graph,
     }
   }
 
-  ORT_ENFORCE(node_group_index == node_groups.size(), "Not all nodes are updated with new initializer.");
+  ORT_ENFORCE(node_group_index == node_groups.size(), "Not all nodes are updated with new initializer. Updated: ", node_group_index, ", expected: ", node_groups.size());
 
   return Status::OK();
 }

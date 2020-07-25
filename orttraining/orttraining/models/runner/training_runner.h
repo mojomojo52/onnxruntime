@@ -27,6 +27,7 @@ class TrainingRunner {
     PathString model_with_training_graph_path;   // To save the model after adding loss func and backward graph.
     PathString model_actual_running_graph_path;  // To save the model with the actual running graph after transformations.
     PathString model_gist_encode_path;           // To save the model with gist encoding.
+    PathString pipeline_partitioned_model_path;  // To save the model after pipeline partition // TODO: it's caller respon
 
     PathString train_data_dir;
     PathString test_data_dir;
@@ -169,7 +170,7 @@ class TrainingRunner {
 
     // Enable GELU approximation
     bool enable_gelu_approximation = false;
-  
+
     // Use invertible layernorm grad
     bool use_invertible_layernorm_grad = false;
   };

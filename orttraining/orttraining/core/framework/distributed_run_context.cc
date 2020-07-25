@@ -62,19 +62,26 @@ DistributedRunContext::DistributedRunContext(int32_t world_rank,
   groups_.resize(static_cast<size_t>(WorkerGroupType::WorkerGroupTypeCount));
 
   // Initialize Data Parallel Group
-  const int32_t data_group_id = pipeline_stage_size == 1 ? world_rank % horizontal_parallel_size : world_rank / pipeline_stage_size;
+  // const int32_t data_group_id = pipeline_stage_size == 1 ? world_rank % horizontal_parallel_size : world_rank / pipeline_stage_size;
+  // const int32_t rank_in_owning_data_group = pipeline_stage_size == 1 ? world_rank / horizontal_parallel_size : world_rank % pipeline_stage_size ;
 
-  const int32_t rank_in_owning_data_group = pipeline_stage_size == 1 ? world_rank / horizontal_parallel_size : world_rank % pipeline_stage_size ;
+  const int32_t data_group_id = world_rank / horizontal_parallel_size / data_parallel_size * horizontal_parallel_size + world_rank % horizontal_parallel_size;
+  const int32_t x = world_rank / horizontal_parallel_size / data_parallel_size * horizontal_parallel_size * data_parallel_size + world_rank % horizontal_parallel_size;
+  const int32_t rank_in_owning_data_group = (world_rank - x) / horizontal_parallel_size;
+
   std::vector<int32_t> data_group_ranks;
-  if (pipeline_stage_size == 1) {
-    for (auto r = 0; r < data_parallel_size; r++) {
-      data_group_ranks.push_back(data_group_id + horizontal_parallel_size * r);
-    }
-  } else {
-    for (auto r = 0; r < data_parallel_size; r++) {
-      data_group_ranks.push_back(data_group_id * pipeline_stage_size + r);
-    }
+  for (auto r = 0; r < data_parallel_size; r++) {
+    data_group_ranks.push_back(x + r * horizontal_parallel_size);
   }
+  // if (pipeline_stage_size == 1) {
+  //   for (auto r = 0; r < data_parallel_size; r++) {
+  //     data_group_ranks.push_back(data_group_id + horizontal_parallel_size * r);
+  //   }
+  // } else {
+  //   for (auto r = 0; r < data_parallel_size; r++) {
+  //     data_group_ranks.push_back(data_group_id * pipeline_stage_size + r);
+  //   }
+  // }
   groups_[WorkerGroupType::DataParallel] = {data_group_ranks, data_group_id,
                                             WorkerGroupType::DataParallel, rank_in_owning_data_group};
 
@@ -83,7 +90,8 @@ DistributedRunContext::DistributedRunContext(int32_t world_rank,
   const int32_t rank_in_owning_hori_group = world_rank % horizontal_parallel_size;
   std::vector<int32_t> hori_group_ranks;
   for (auto r = 0; r < horizontal_parallel_size; r++) {
-    hori_group_ranks.push_back(hori_group_id * horizontal_parallel_size + r);
+    // hori_group_ranks.push_back(hori_group_id * horizontal_parallel_size + r);
+    hori_group_ranks.push_back(world_rank - rank_in_owning_hori_group + r);
   }
   groups_[WorkerGroupType::HorizontalParallel] = {hori_group_ranks, hori_group_id,
                                                   WorkerGroupType::HorizontalParallel, rank_in_owning_hori_group};
